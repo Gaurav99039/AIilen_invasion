@@ -3,6 +3,7 @@ import pygame
 from settings import Settings
 from ship import Ship
 from bullet import Bullet
+from ailens import Ailen
 
 
 class AilenInvasion:
@@ -12,6 +13,8 @@ class AilenInvasion:
         self.screen = pygame.display.set_mode((self.setting.width,self.setting.height))
         self.ship = Ship(self)
         self.bullets = pygame.sprite.Group()
+        self.ailens = pygame.sprite.Group()
+        self._create_fleet()
         self.bg_color = self.setting.bg_color
         pygame.display.set_caption('Ailen Invasion')
     
@@ -22,7 +25,7 @@ class AilenInvasion:
            self.bullets.update()
            self._update_screen()
            for bullet in self.bullets.copy():
-                if bullet.rect.bottom.copy():
+                if bullet.rect.bottom:
                      if bullet.rect.bottom <= 0:
                           self.bullets.remove(bullet)
                 print(len(self.bullets))
@@ -57,6 +60,30 @@ class AilenInvasion:
          if len(self.bullets) < self.setting .bullets_allowed:
           new_bullet = Bullet(self)
           self.bullets.add(new_bullet)
+     
+    def _create_fleet(self):
+         ailen = Ailen(self)
+         ailen_width = ailen.rect.width
+         available_space_x = self.setting.width - (2*ailen_width)
+         number_ailens_x = available_space_x // (2*ailen_width)
+         for ailen_number in range(number_ailens_x):
+              self._create_ailen(ailen_number)
+             
+
+
+    def _create_ailen(self,ailen_number):
+          ailen = Ailen(self)
+          ailen_width,ailen_height = ailen.rect.size
+          ailen.x = ailen_width + 2 * ailen_width * ailen_number
+          ailen.rect.x  = ailen.x
+          self.ailens.add(ailen)
+          ship_height = self.ship.rect.height
+          available_space_y = (self.setting.height - (3*ailen_height) - ship_height)
+          number_rows = available_space_y//(2*ailen_height)
+          for  row_number in range(number_rows):
+               
+         
+         
          
                           
                      
@@ -67,6 +94,7 @@ class AilenInvasion:
           self.ship.blitme()
           for bullet in self.bullets.sprites():
                bullet.draw_bullet()
+          self.ailens.draw(self.screen)
           pygame.display.flip()
          
 
