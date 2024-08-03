@@ -9,4 +9,3 @@ class Settings():
         self.bullet_color = (60,60,60)
         self.bullet_speed = 1.5
         self.bullets_allowed = 6
-        self.ailen_speed = 9
