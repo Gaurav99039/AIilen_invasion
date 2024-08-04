@@ -23,6 +23,7 @@ class AilenInvasion:
            self._check_events()
            self.ship.update()
            self.bullets.update()
+           self._update_ailens()
            self._update_screen()
            for bullet in self.bullets.copy():
                 if bullet.rect.bottom:
@@ -63,25 +64,42 @@ class AilenInvasion:
      
     def _create_fleet(self):
          ailen = Ailen(self)
-         ailen_width = ailen.rect.width
+         ailen_width,ailen_height = ailen.rect.size
          available_space_x = self.setting.width - (2*ailen_width)
          number_ailens_x = available_space_x // (2*ailen_width)
-         for ailen_number in range(number_ailens_x):
-              self._create_ailen(ailen_number)
+         ship_height = self.ship.rect.height
+         available_space_y = (self.setting.height - (3*ailen_height) - ship_height)
+         number_rows = available_space_y//(2*ailen_height)
+         for row_number in range(number_rows):
+          for ailen_number in range(number_ailens_x):
+              self._create_ailen(ailen_number,row_number)
              
 
 
-    def _create_ailen(self,ailen_number):
+    def _create_ailen(self,ailen_number,row_number):
           ailen = Ailen(self)
           ailen_width,ailen_height = ailen.rect.size
           ailen.x = ailen_width + 2 * ailen_width * ailen_number
           ailen.rect.x  = ailen.x
+          ailen.rect.y = ailen.rect.height + 2*ailen_height*row_number
           self.ailens.add(ailen)
-          ship_height = self.ship.rect.height
-          available_space_y = (self.setting.height - (3*ailen_height) - ship_height)
-          number_rows = available_space_y//(2*ailen_height)
-          for  row_number in range(number_rows):
-               
+     
+    def _check_fleet_edges(self):
+        for ailen in self.ailens.sprites():
+            if ailen.check_edges():
+                self._change_fleet_direction()
+                break
+     
+    def _change_fleet_direction(self):
+        for ailen in self.ailens.sprites():
+            ailen.rect.y += self.settings.fleet_drop_speed
+        self.settings.fleet_direction *= -1
+        
+     
+    def _update_ailens(self):
+        self._check_fleet_edges()
+        self.ailens.update()
+        
          
          
          
