@@ -3,6 +3,7 @@ import pygame
 from time import sleep
 from settings import Settings
 from game_stat import GameStats
+from score_board import Scoreboard
 from button import Button
 from ship import Ship
 from bullet import Bullet
@@ -16,6 +17,7 @@ class AilenInvasion:
         self.setting = Settings()
         self.screen = pygame.display.set_mode((self.setting.width,self.setting.height))
         self.stats = GameStats(self)
+        self.sb = Scoreboard(self)
         self.ship = Ship(self)
         self.bullets = pygame.sprite.Group()
         self.ailens = pygame.sprite.Group()
@@ -31,12 +33,15 @@ class AilenInvasion:
             self.ship.update()
             self._update_bullets()
             self._update_ailens()
-            self._update_screen()
+  
+            
             for bullet in self.bullets.copy():
                     if bullet.rect.bottom:
                         if bullet.rect.bottom <= 0:
                             self.bullets.remove(bullet)
                     print(len(self.bullets))
+           self._update_screen()
+           
 
     def _check_events(self):
             for event in pygame.event.get():
@@ -46,6 +51,24 @@ class AilenInvasion:
                      self._check_Keydown(event)
                 elif event.type == pygame.KEYUP:
                      self._check_keyup(event)
+                elif event.type == pygame.MOUSEBUTTONDOWN:
+                    mouse_pos = pygame.mouse.get_pos()
+                    self._check_play_button(mouse_pos)
+
+    def _check_play_button(self,mouse_pos):
+        button_clicked = self.play_button.rect.collidepoint(mouse_pos)
+        if button_clicked and not self.stats.game_active:
+            self.setting.initialize_dynamic_settings()
+            self.stats.reset_stats()
+            self.stats.game_active = True
+            self.sb.prep_score()
+            self.sb.prep_level()
+            self.sb.prep_ships()
+            self.ailens.empty()
+            self.bullets.copy()
+            self._create_fleet()
+            self.ship.center_ship()
+            pygame.mouse.set_visible(False)
                      
         
     def _check_Keydown(self,event):
@@ -115,9 +138,17 @@ class AilenInvasion:
 
     def _check_bullet_ailen_collisons(self):
         collisions = pygame.sprite.groupcollide(self.bullets,self.ailens,True,True)
+        if collisions:
+            for ailens in collisions.values():
+                self.stats.score += self.setting.ailen_points
+            self.sb.prep_score()
+            self.sb.check_high_score()
         if not self.ailens:
             self.bullets.empty()
             self._create_fleet()
+            self.setting.increase_speed()
+            self.stats.level += 1
+            self.sb.prep_level()
         
         
 
@@ -130,8 +161,9 @@ class AilenInvasion:
         self._check_ailens_bottoms()
     
     def _ship_hit(self):
-        if self.stats.ships_left >0:
+        if self.stats.ships_left > 0:
             self.stats.ships_left -= 1
+            self.sb.prep_ships()
             self.ailens.empty()
             self.bullets.empty()
             self._create_fleet()
@@ -139,6 +171,7 @@ class AilenInvasion:
             sleep(0.5)
         else:
             self.stats.game_active = False
+            pygame.mouse.set_visible(True)
     
     def _check_ailens_bottoms(self):
         screen_rect = self.screen.get_rect()
@@ -157,6 +190,7 @@ class AilenInvasion:
           for bullet in self.bullets.sprites():
                bullet.draw_bullet()
           self.ailens.draw(self.screen)
+          self.sb.show_score()
           if not self.stats.game_active:
               self.play_button.draw_button()
           pygame.display.flip()
